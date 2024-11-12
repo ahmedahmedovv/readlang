@@ -1,4 +1,4 @@
-# Readlang Card and ContextSpeaker Chrome Extension
+# Readlang Card and Context Speaker Chrome Extension
 
 A Chrome extension that automatically reads text content from Readlang flashcards using OpenAI's Text-to-Speech API.
 
