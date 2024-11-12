@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Element Text Speaker Options</title>
+    <style>
+        body { padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        input[type="text"] { width: 100%; padding: 5px; margin: 5px 0; }
+        button { margin-top: 10px; }
+        .status { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Element Text Speaker Settings</h2>
+        <label for="apiKey">OpenAI API Key:</label>
+        <input type="text" id="apiKey" placeholder="Enter your OpenAI API Key">
+        <button id="save">Save</button>
+        <div id="status" class="status"></div>
+    </div>
+    <script src="options.js"></script>
+</body>
+</html> 

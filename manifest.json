@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Element Text Speaker",
+  "version": "1.0",
+  "description": "Speaks text content of specific XPath element on Readlang flashcards",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://readlang.com/flashcards*"],
+      "js": ["core.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html"
+} 
