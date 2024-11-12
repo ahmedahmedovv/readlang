@@ -1,24 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Load existing API key
-    chrome.storage.sync.get(['apiKey'], (result) => {
-        if (result.apiKey) {
-            document.getElementById('apiKey').value = result.apiKey;
-        }
+    const apiKeyManager = new ApiKeyManager('status', () => {
+        setTimeout(() => window.close(), 1500);
     });
-
-    // Save API key
+    
+    apiKeyManager.loadApiKey();
     document.getElementById('saveButton').addEventListener('click', () => {
-        const apiKey = document.getElementById('apiKey').value.trim();
-        if (!apiKey) {
-            document.getElementById('status').textContent = 'Please enter an API key';
-            return;
-        }
-
-        chrome.storage.sync.set({ apiKey }, () => {
-            document.getElementById('status').textContent = 'API key saved!';
-            setTimeout(() => {
-                window.close();
-            }, 1500);
-        });
+        apiKeyManager.saveApiKey();
     });
 }); 
