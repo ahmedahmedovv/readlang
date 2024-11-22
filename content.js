@@ -19,37 +19,58 @@ function getElementByXPath(xpath) {
 }
 
 async function findAndLogContext() {
-    if (!cachedXPaths || isProcessing) return;
+    if (!cachedXPaths || isProcessing) {
+        console.log('Skipping findAndLogContext: already processing or no XPaths');
+        return;
+    }
     
     try {
         isProcessing = true;
-        ContentManager.reset();
+        console.log('Starting content scan...');
+        
+        const newContent = new Set();
         
         for (let xpathIndex = 0; xpathIndex < cachedXPaths.length; xpathIndex++) {
             const xpath = cachedXPaths[xpathIndex];
             const elements = getElementByXPath(xpath);
             
             if (elements && elements.snapshotLength > 0) {
+                console.log(`Found ${elements.snapshotLength} elements for XPath: ${xpath}`);
+                
                 for (let i = 0; i < elements.snapshotLength; i++) {
                     const element = elements.snapshotItem(i);
                     const text = element.textContent.trim();
                     
-                    // Check if text should be skipped
-                    if (ContentManager.shouldSkipContent(text)) continue;
+                    if (ContentManager.shouldSkipContent(text)) {
+                        console.log('Skipping invalid content:', text);
+                        continue;
+                    }
                     
-                    // Check ignored words
                     const shouldSkip = cachedIgnoredWords.some(word => 
                         text.toLowerCase().includes(word.toLowerCase())
                     );
                     
-                    if (!shouldSkip) {
+                    if (shouldSkip) {
+                        console.log('Skipping ignored word match:', text);
+                        continue;
+                    }
+                    
+                    const contentKey = `${xpath}:${text}`;
+                    if (!ContentManager.hasContent(contentKey) && !newContent.has(contentKey)) {
+                        console.log('Processing new content:', contentKey);
+                        newContent.add(contentKey);
                         await ContentManager.processContent(text, xpath, xpathIndex);
+                    } else {
+                        console.log('Content already processed:', contentKey);
                     }
                 }
             }
         }
+    } catch (error) {
+        console.error('Error in findAndLogContext:', error);
     } finally {
         isProcessing = false;
+        console.log('Content scan completed');
     }
 }
 
@@ -91,18 +112,23 @@ const debouncedFindAndLog = () => {
     if (timeout) {
         clearTimeout(timeout);
     }
-    timeout = setTimeout(findAndLogContext, 250);
+    timeout = setTimeout(findAndLogContext, 500);
 };
 
 // Create observer
 const observer = new MutationObserver((mutations) => {
     if (!document.body.contains(mutations[0].target)) return;
     
-    const hasRelevantChanges = mutations.some(mutation => 
-        mutation.type === 'childList' || 
-        (mutation.type === 'characterData' && 
-         mutation.target.nodeType === Node.TEXT_NODE)
-    );
+    const hasRelevantChanges = mutations.some(mutation => {
+        // Only process if the change is meaningful
+        if (mutation.type === 'childList') {
+            return Array.from(mutation.addedNodes).some(node => 
+                node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE
+            );
+        }
+        return mutation.type === 'characterData' && 
+               mutation.target.nodeType === Node.TEXT_NODE;
+    });
     
     if (hasRelevantChanges) {
         debouncedFindAndLog();
