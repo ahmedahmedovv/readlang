@@ -1,175 +1,133 @@
-// Add this at the top of content.js
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
+function containsIgnoredWords(text) {
+    return CONFIG.ignoredWords.some(word => 
+        text.toLowerCase().includes(word.toLowerCase())
+    );
 }
 
-// Add this helper function at the top of content.js
-function getElementByXPath(xpath) {
-    try {
-        return document.evaluate(
-            xpath,
-            document,
-            null,
-            XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-            null
-        );
-    } catch (error) {
-        console.error('XPath evaluation error:', error);
-        return null;
-    }
+const speechService = new SpeechService(CONFIG);
+
+// Add these cached selectors at the top
+const domElements = {
+    wordCard: null,
+    context: null,
+    display: null
+};
+
+// Cache DOM elements
+function cacheDOMElements() {
+    domElements.wordCard = document.querySelector(CONFIG.selectors.wordCard);
+    domElements.context = document.querySelector(CONFIG.selectors.context);
+    domElements.display = document.getElementById(CONFIG.selectors.display);
 }
 
-// Global state
-let isInitialized = false;
-let isProcessing = false;
-let cachedXPaths = null;
-let cachedIgnoredWords = [];
-
-async function initializeExtension() {
-    console.group('🚀 Extension Initialization');
+function showContextContent() {
+    // Update cache
+    cacheDOMElements();
     
-    try {
-        // First check for API key
-        const apiKey = await Config.getApiKey();
-        if (!apiKey) {
-            console.warn('⚠️ No API key found - speech functionality will not work');
-            return;
+    let combinedContent = '';
+    
+    if (domElements.wordCard) {
+        const wordCardText = domElements.wordCard.textContent.trim();
+        if (!containsIgnoredWords(wordCardText)) {
+            combinedContent += wordCardText + CONFIG.textFormatting.sentenceEnd;
         }
-        console.log('✅ API key found');
-
-        // Load settings
-        const settings = await chrome.storage.sync.get({
-            xpathExpressions: ['//*[@id="context"]'],
-            ignoredWords: []
-        });
-
-        // Cache settings
-        cachedXPaths = settings.xpathExpressions;
-        cachedIgnoredWords = settings.ignoredWords;
-
-        // Initialize services
-        await SpeechService.initializeCache();
-        ContentManager.reset();
-
-        // Set up observer
-        setupMutationObserver();
-
-        isInitialized = true;
-        console.log('✅ Extension fully initialized');
+    }
+    
+    if (domElements.context) {
+        const contextText = domElements.context.textContent.trim();
+        if (!containsIgnoredWords(contextText)) {
+            combinedContent += contextText;
+        }
+    }
+    
+    // Only proceed if content changed
+    if (combinedContent && (!domElements.display || domElements.display.children[1].textContent !== combinedContent)) {
+        let display = document.getElementById(CONFIG.selectors.display);
         
-        // Run initial scan
-        findAndLogContext();
-
-    } catch (error) {
-        console.error('❌ Initialization error:', error);
-    }
-    
-    console.groupEnd();
-}
-
-function setupMutationObserver() {
-    const observer = new MutationObserver(debounce(() => {
-        if (isInitialized) {
-            findAndLogContext();
+        if (!display) {
+            display = document.createElement('div');
+            display.id = CONFIG.selectors.display;
+            Object.assign(display.style, CONFIG.displayStyles);
+            
+            const sourceIndicator = document.createElement('div');
+            sourceIndicator.style.fontSize = '12px';
+            sourceIndicator.style.color = '#666';
+            sourceIndicator.style.marginBottom = '5px';
+            
+            const speakButton = document.createElement('button');
+            speakButton.textContent = CONFIG.speech.button.text;
+            Object.assign(speakButton.style, {
+                ...CONFIG.speech.button.styles,
+                padding: '8px 16px',
+                backgroundColor: '#1a73e8',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer'
+            });
+            
+            speakButton.onclick = () => {
+                const contentDiv = display.children[1];
+                const currentContent = contentDiv.textContent;
+                if (currentContent) {
+                    speechService.replay(currentContent);
+                }
+            };
+            
+            display.appendChild(sourceIndicator);
+            display.appendChild(document.createElement('div'));
+            display.appendChild(speakButton);
+            document.body.appendChild(display);
         }
-    }, 500));
+        
+        const contentDiv = display.children[1];
+        if (contentDiv.textContent !== combinedContent) {
+            contentDiv.textContent = combinedContent;
+            
+            const sourceIndicator = display.firstChild;
+            speechService.speak(combinedContent, (isFromCache) => {
+                sourceIndicator.textContent = isFromCache ? 
+                    '🔄 Playing from cache' : 
+                    '🌐 Fetching from OpenAI';
+            });
+        }
+    }
+}
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
+showContextContent();
+
+// Optimize the observer
+const observer = new MutationObserver((mutations) => {
+    // Use some() instead of for...of for better performance
+    const shouldUpdate = mutations.some(mutation => {
+        const target = mutation.target;
+        return target.id === CONFIG.selectors.wordCard.slice(1) || 
+               target.id === CONFIG.selectors.context.slice(1);
     });
-
-    console.log('📡 Mutation observer setup complete');
-}
-
-// Initialize on document load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeExtension);
-} else {
-    initializeExtension();
-}
-
-// Re-initialize on extension update
-chrome.runtime.onConnect.addListener(() => {
-    initializeExtension();
+    
+    if (shouldUpdate) {
+        showContextContent();
+    }
 });
 
-async function findAndLogContext() {
-    if (!cachedXPaths || isProcessing) {
-        console.warn('🚫 Scan blocked:', {
-            reason: !cachedXPaths ? 'No XPaths configured' : 'Already processing',
-            cachedXPaths: cachedXPaths,
-            isProcessing: isProcessing
+// More specific observation
+observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: false // Disable if not needed
+});
+
+// Add message listener at the bottom of the file
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'clearCache') {
+        speechService.clearCache();
+        sendResponse({success: true});
+    } else if (request.action === 'getCacheSize') {
+        speechService.getCacheSize().then(size => {
+            sendResponse(size);
         });
-        return;
+        return true; // Required for async response
     }
-    
-    try {
-        isProcessing = true;
-        console.group('🔍 Content Scan');
-        
-        for (let xpathIndex = 0; xpathIndex < cachedXPaths.length; xpathIndex++) {
-            const xpath = cachedXPaths[xpathIndex];
-            console.group(`🔎 Processing XPath ${xpathIndex + 1}/${cachedXPaths.length}: ${xpath}`);
-            
-            const elements = getElementByXPath(xpath);
-            
-            if (!elements || elements.snapshotLength === 0) {
-                console.log('No elements found for XPath:', xpath);
-                console.groupEnd();
-                continue;
-            }
-            
-            console.log(`Found ${elements.snapshotLength} elements`);
-            
-            for (let i = 0; i < elements.snapshotLength; i++) {
-                const element = elements.snapshotItem(i);
-                const text = element.textContent.trim();
-                
-                console.group(`📄 Element ${i + 1}/${elements.snapshotLength}`);
-                console.log('Text content:', text);
-                
-                if (!text || ContentManager.shouldSkipContent(text)) {
-                    console.log('⏭️ Skipping invalid content');
-                    console.groupEnd();
-                    continue;
-                }
-
-                // Check ignored words
-                if (cachedIgnoredWords.some(word => 
-                    text.toLowerCase().includes(word.toLowerCase())
-                )) {
-                    console.log('⏭️ Skipping: Contains ignored word');
-                    console.groupEnd();
-                    continue;
-                }
-
-                try {
-                    console.log('🎯 Processing content:', text);
-                    await ContentManager.processContent(text, xpath, xpathIndex);
-                    console.log('✅ Content processed successfully');
-                } catch (error) {
-                    console.error('❌ Error processing content:', error);
-                }
-                
-                console.groupEnd(); // Element group
-            }
-            
-            console.groupEnd(); // XPath group
-        }
-        
-    } catch (error) {
-        console.error('❌ Fatal error in content scan:', error);
-    } finally {
-        isProcessing = false;
-        console.groupEnd();
-    }
-}
+    return true;
+}); 
