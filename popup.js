@@ -131,6 +131,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('saveKey').click();
         }
     });
+
+    // Update cache size display
+    updateCacheSize();
+
+    // Clear cache button handler
+    document.getElementById('clearCache').addEventListener('click', async () => {
+        await chrome.storage.local.get(null, async (items) => {
+            const audioKeys = Object.keys(items).filter(key => key.startsWith('audio_'));
+            await chrome.storage.local.remove(audioKeys);
+            showStatus('Cache cleared successfully');
+            updateCacheSize();
+        });
+    });
+
+    // Initial cache size check
+    await SpeechService.updateCacheUISize();
+
+    try {
+        const apiKey = await Config.getApiKey();
+        if (!apiKey) {
+            showStatus('Please configure your OpenAI API key', 'error');
+            document.getElementById('apiKeyInput').focus();
+        }
+    } catch (error) {
+        console.error('Error checking API key:', error);
+    }
 });
 
 function showStatus(message) {
@@ -140,4 +166,72 @@ function showStatus(message) {
     setTimeout(() => {
         status.style.display = 'none';
     }, 2000);
-} 
+}
+
+async function updateCacheSize() {
+    const items = await chrome.storage.local.get(null);
+    const audioKeys = Object.keys(items).filter(key => key.startsWith('audio_'));
+    const totalSize = audioKeys.reduce((size, key) => {
+        return size + (items[key].length * 2); // Approximate size in bytes
+    }, 0);
+    
+    const sizeDisplay = totalSize > 1048576 
+        ? `${(totalSize / 1048576).toFixed(2)} MB` 
+        : `${(totalSize / 1024).toFixed(2)} KB`;
+    
+    document.getElementById('cacheSize').textContent = 
+        `Cache Size: ${sizeDisplay} (${audioKeys.length} items)`;
+}
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'updateCacheSize') {
+        const sizeDisplay = message.size > 1048576 
+            ? `${(message.size / 1048576).toFixed(2)} MB` 
+            : `${(message.size / 1024).toFixed(2)} KB`;
+        
+        document.getElementById('cacheSize').textContent = 
+            `Cache Size: ${sizeDisplay} (${message.count} items)`;
+    }
+});
+
+// Update the cache display in popup
+function updateCacheDisplay(data) {
+    const cacheElement = document.getElementById('cacheSize');
+    if (cacheElement) {
+        cacheElement.textContent = `Cache Size: ${data.size} (${data.count} items)`;
+    }
+}
+
+// Listen for cache size updates
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'updateCacheSize' && message.data) {
+        updateCacheDisplay(message.data);
+    }
+});
+
+// Initialize cache display when popup opens
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Popup opened, requesting cache size update');
+    try {
+        // Request initial cache size update
+        await SpeechService.updateCacheUISize();
+    } catch (error) {
+        console.error('Error initializing cache display:', error);
+        // Show error state in UI
+        document.getElementById('cacheSize').textContent = 'Cache Size: Error loading';
+    }
+});
+
+// Add clear cache functionality
+document.getElementById('clearCache')?.addEventListener('click', async () => {
+    console.log('Clearing cache...');
+    try {
+        await SpeechService.clearCache();
+        // Update display after clearing
+        await SpeechService.updateCacheUISize();
+        showStatus('Cache cleared successfully');
+    } catch (error) {
+        console.error('Error clearing cache:', error);
+        showStatus('Error clearing cache');
+    }
+}); 

@@ -1,64 +1,90 @@
 // Content management and logging
 class ContentManager {
-    static loggedContent = new Set();
-    static loggedTexts = new Set();
-    static globalCounter = 1;
     static audioElement = null;
     static currentlyPlaying = false;
     static processingContent = false;
+    static recentlyProcessed = new Set(); // Store recently processed content
+    static RECENT_TIMEOUT = 5000; // 5 seconds
 
-    static hasContent(contentKey) {
-        const hasKey = this.loggedContent.has(contentKey);
-        console.log(`Checking content key: ${contentKey}, exists: ${hasKey}`);
-        return hasKey;
+    static shouldSkipContent(text) {
+        // Check for invalid content conditions
+        const skipConditions = {
+            empty: !text || text.trim() === '',
+            hasUnderscore: text.includes('_'),
+            tooShort: text.trim().length < 2
+        };
+
+        console.log('🔍 Skip check:', {
+            text: text,
+            conditions: skipConditions,
+            shouldSkip: Object.values(skipConditions).some(condition => condition)
+        });
+
+        return Object.values(skipConditions).some(condition => condition);
     }
 
     static async processContent(text, xpath, xpathIndex) {
-        if (this.processingContent) {
-            console.log('Already processing content, skipping...');
-            return;
-        }
-
+        console.group('🎯 Content Processing');
+        console.log('Processing text:', text);
+        
         try {
-            this.processingContent = true;
-            console.log('Processing content:', text);
-            
+            if (this.processingContent) {
+                console.log('⏳ Already processing content, skipping...');
+                return;
+            }
+
+            // Add underscore check here as well for extra safety
             if (this.shouldSkipContent(text)) {
-                console.log('Skipping invalid content');
+                console.log('⏭️ Skipping content with underscore or invalid format');
                 return;
             }
 
+            this.processingContent = true;
+            
+            // Check if content was recently processed
             const contentKey = `${xpath}:${text}`;
-            if (this.loggedContent.has(contentKey) || this.loggedTexts.has(text)) {
-                console.log('Content already logged, skipping:', contentKey);
+            if (this.recentlyProcessed.has(contentKey)) {
+                console.log('⏭️ Content recently processed, skipping');
                 return;
             }
 
-            this.logContent(text, xpath, xpathIndex);
+            // Add to recently processed and remove after timeout
+            this.recentlyProcessed.add(contentKey);
+            setTimeout(() => {
+                this.recentlyProcessed.delete(contentKey);
+            }, this.RECENT_TIMEOUT);
+
+            console.log('🆕 Processing new content');
             
             if (!this.currentlyPlaying) {
                 await this.speakContent(text);
             } else {
-                console.log('Audio already playing, skipping speech');
+                console.log('🔊 Audio already playing, skipping');
             }
+        } catch (error) {
+            console.error('❌ Error processing content:', error);
         } finally {
             this.processingContent = false;
+            console.groupEnd();
         }
     }
 
     static async speakContent(text) {
+        console.group('🎵 Audio Playback');
+        console.log('Text to speak:', text);
+        
         if (this.currentlyPlaying) {
-            console.log('Already playing audio, skipping');
+            console.log('⏳ Already playing audio, skipping');
+            console.groupEnd();
             return;
         }
 
-        console.log('Starting speech for:', text);
         this.currentlyPlaying = true;
         
         try {
             const audioUrl = await SpeechService.textToSpeech(text);
             if (audioUrl) {
-                console.log('Got audio URL:', audioUrl);
+                console.log('🎧 Starting audio playback');
                 
                 if (this.audioElement) {
                     this.audioElement.pause();
@@ -68,49 +94,39 @@ class ContentManager {
                 this.audioElement = new Audio(audioUrl);
                 
                 await new Promise((resolve, reject) => {
+                    this.audioElement.addEventListener('play', () => {
+                        console.log('▶️ Audio started playing');
+                    });
+
                     this.audioElement.addEventListener('ended', () => {
-                        console.log('Audio playback completed');
+                        console.log('✅ Audio playback completed');
                         resolve();
                     });
                     
                     this.audioElement.addEventListener('error', (e) => {
-                        console.error('Audio playback error:', e);
+                        console.error('❌ Audio playback error:', e);
                         reject(e);
                     });
                     
-                    this.audioElement.play().catch(reject);
+                    const playPromise = this.audioElement.play();
+                    if (playPromise) {
+                        playPromise.catch(error => {
+                            console.error('❌ Play error:', error);
+                            reject(error);
+                        });
+                    }
                 });
-                
-                URL.revokeObjectURL(audioUrl);
             }
         } catch (error) {
-            console.error('Error playing audio:', error);
+            console.error('❌ Error playing audio:', error);
         } finally {
             this.currentlyPlaying = false;
-            console.log('Speech completed, ready for next content');
+            console.log('🔄 Ready for next content');
+            console.groupEnd();
         }
     }
 
-    static logContent(text, xpath, xpathIndex) {
-        const contentKey = `${xpath}:${text}`;
-        console.log(
-            `[${this.globalCounter}] XPath ${xpathIndex + 1}: '${xpath}'`,
-            '\nContent:', text,
-            '\n-------------------'
-        );
-        this.loggedContent.add(contentKey);
-        this.loggedTexts.add(text);
-        this.globalCounter++;
-    }
-
-    static shouldSkipContent(text) {
-        const should = !text || text.trim() === '' || text.includes('_');
-        console.log('Should skip content:', should, 'Text:', text);
-        return should;
-    }
-
     static reset() {
-        console.log('Resetting ContentManager');
         if (this.audioElement) {
             this.audioElement.pause();
             URL.revokeObjectURL(this.audioElement.src);
@@ -118,5 +134,6 @@ class ContentManager {
         }
         this.currentlyPlaying = false;
         this.processingContent = false;
+        this.recentlyProcessed.clear();
     }
 } 

@@ -168,4 +168,18 @@ textarea#ignoredWords {
     padding: 8px;
     background: #e8f5e9;
     border-radius: 4px;
+}
+
+.cache-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+#cacheSize {
+    font-size: 14px;
+    color: #666;
 } 
