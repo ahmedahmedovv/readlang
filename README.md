@@ -1,75 +1,70 @@
 # Context Finder Chrome Extension
 
-A Chrome extension that monitors webpage content using XPath selectors and converts text to speech using OpenAI's TTS API.
+A Chrome extension that enhances text-to-speech functionality with OpenAI's TTS API, featuring audio caching and customizable display options.
 
 ## Features
 
-- 🔍 Monitor specific webpage elements using customizable XPath expressions
-- 🔊 Text-to-speech conversion using OpenAI's TTS API
-- ⚡ Real-time content updates through MutationObserver
-- 🚫 Ignore specific words or phrases
-- 🔑 Secure API key management
-- 🧪 XPath testing functionality
+- 🎯 Automatically detects and reads content from specified page elements
+- 🔊 Text-to-speech powered by OpenAI's TTS API
+- 💾 Audio caching system for improved performance
+- 🎨 Customizable display position (top-left, top-right, bottom-left, bottom-right)
+- 🗣️ Multiple voice options (Alloy, Echo, Fable, Onyx, Nova)
+- 🔄 Replay functionality for last spoken content
+- 📊 Cache management with size tracking
+- 🔐 Secure API key storage
 
 ## Installation
 
 1. Clone this repository
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" in the top right
-4. Click "Load unpacked" and select the `readlang` directory
+4. Click "Load unpacked" and select the extension directory
 
 ## Configuration
 
-### API Key Setup
-1. Open the extension popup
-2. Enter your OpenAI API key in the designated field
-3. Click the save button
+### Required Setup
+1. Open the extension popup by clicking the extension icon
+2. Enter your OpenAI API key in the settings
+3. Choose your preferred voice and display position
+4. Click "Save Changes"
 
-### Element Monitoring
-1. Add XPath expressions to monitor specific elements
-2. Test XPath expressions using the test button (🧪)
-3. Remove unwanted expressions using the trash icon
+### Available Settings
 
-### Ignored Words
-- Add words or phrases (one per line) that should be ignored during content processing
+- **Voice Options:**
+  - Alloy
+  - Echo
+  - Fable
+  - Onyx
+  - Nova
+
+- **Display Positions:**
+  - Top Left
+  - Top Right
+  - Bottom Left
+  - Bottom Right
+
+## Usage
+
+The extension will automatically:
+1. Monitor specified page elements for content changes
+2. Display the content in a floating window
+3. Read the content aloud using the selected voice
+4. Cache audio for improved performance
+
+### Controls
+- 🔊 **Replay Button**: Click to replay the last spoken content
+- 🗑️ **Clear Cache**: Manage audio cache through the extension popup
+- 📊 **Cache Info**: View current cache size and entry count
 
 ## Technical Details
 
-### File Structure
-- `manifest.json`: Extension configuration
-- `popup.html/css/js`: Extension UI and settings management
-- `content.js`: Main content script for webpage monitoring
-- `content-manager.js`: Content processing and audio playback
-- `speech-service.js`: OpenAI TTS API integration
-- `config.js`: API key management
+### Components
 
-### Technologies Used
-- Chrome Extensions API
-- OpenAI TTS API
-- MutationObserver API
-- XPath for DOM traversal
-- Chrome Storage API
+- `content.js`: Main content script handling DOM operations and UI
+- `speech.js`: Speech service managing TTS functionality and audio caching
+- `popup.js`: Settings management and user interface
+- `config.js`: Configuration management and settings storage
 
-## Permissions
-- `activeTab`: Access to current tab
-- `storage`: Save extension settings
-- `tabs`: Tab management
-- Access to OpenAI API endpoints
+### Features Implementation
 
-## Development
-
-### Building
-No build process required - this is a vanilla JavaScript project.
-
-### Testing
-1. Make changes to the code
-2. Reload the extension in `chrome://extensions/`
-3. Test functionality in a new tab
-
-## Contributing
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
+#### Audio Caching
