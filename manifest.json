@@ -3,7 +3,11 @@
   "name": "Context Finder",
   "version": "1.0",
   "description": "Finds and shows content of #context element",
-  "permissions": ["activeTab", "storage"],
+  "permissions": [
+    "activeTab", 
+    "storage",
+    "unlimitedStorage"
+  ],
   "host_permissions": ["https://api.openai.com/*"],
   "content_scripts": [
     {
