@@ -32,7 +32,7 @@ const DEFAULT_CONFIG = {
     openai: {
         apiKey: '',
         voice: 'alloy',
-        model: 'tts-1',
+        model: 'tts-1-hd',
         endpoint: 'https://api.openai.com/v1/audio/speech'
     },
     textFormatting: {
