@@ -8,10 +8,7 @@ class SpeechService {
         this.speechQueue = [];
         this.isProcessingQueue = false;
         this.totalCacheSize = 0;
-        this.db = null;
-
-        // Initialize IndexedDB
-        this.initializeDB();
+        this.db = new AudioDB();
 
         // Listen for config changes
         chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -24,57 +21,13 @@ class SpeechService {
                 }
             }
         });
+
+        this.init();
     }
 
-    async initializeDB() {
-        try {
-            const request = indexedDB.open('SpeechCache', 1);
-            
-            request.onerror = (event) => {
-                console.error('IndexedDB error:', event.target.error);
-            };
-
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains('audioData')) {
-                    const store = db.createObjectStore('audioData', { keyPath: 'text' });
-                    store.createIndex('timestamp', 'timestamp', { unique: false });
-                    store.createIndex('size', 'size', { unique: false });
-                }
-            };
-
-            request.onsuccess = (event) => {
-                this.db = event.target.result;
-                this.loadCacheFromDB();
-            };
-        } catch (error) {
-            console.error('Failed to initialize IndexedDB:', error);
-        }
-    }
-
-    async loadCacheFromDB() {
-        try {
-            const transaction = this.db.transaction(['audioData'], 'readonly');
-            const store = transaction.objectStore('audioData');
-            const request = store.getAll();
-
-            request.onsuccess = () => {
-                const items = request.result;
-                this.totalCacheSize = 0;
-                this.audioCache.clear();
-
-                items.forEach(item => {
-                    const audioUrl = URL.createObjectURL(item.blob);
-                    this.audioCache.set(item.text, {
-                        url: audioUrl,
-                        size: item.size
-                    });
-                    this.totalCacheSize += item.size;
-                });
-            };
-        } catch (error) {
-            console.error('Failed to load cache from IndexedDB:', error);
-        }
+    async init() {
+        await this.db.init();
+        await this.loadAudioCache();
     }
 
     async speak(text, onSourceCallback) {
@@ -186,6 +139,19 @@ class SpeechService {
         });
     }
 
+    async clearCache() {
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio.onended = null;
+            this.currentAudio = null;
+        }
+        this.isSpeaking = false;
+        this.audioCache.forEach(({url}) => URL.revokeObjectURL(url));
+        this.audioCache.clear();
+        this.totalCacheSize = 0;
+        await this.db.clearAll();
+    }
+
     async getCacheSize() {
         return {
             entries: this.audioCache.size,
@@ -194,52 +160,33 @@ class SpeechService {
     }
 
     async setAudioCache(text, audioBlob) {
-        try {
-            const audioUrl = URL.createObjectURL(audioBlob);
-            this.audioCache.set(text, {
-                url: audioUrl,
-                size: audioBlob.size
-            });
-            this.totalCacheSize += audioBlob.size;
+        const audioUrl = URL.createObjectURL(audioBlob);
+        this.audioCache.set(text, {
+            url: audioUrl,
+            size: audioBlob.size
+        });
+        this.totalCacheSize += audioBlob.size;
 
-            // Save to IndexedDB
-            const transaction = this.db.transaction(['audioData'], 'readwrite');
-            const store = transaction.objectStore('audioData');
-            await store.put({
-                text: text,
-                blob: audioBlob,
-                size: audioBlob.size,
-                timestamp: Date.now()
-            });
+        // Save to IndexedDB
+        await this.db.saveAudio(text, audioBlob, {
+            voice: this.config.openai.voice
+        });
 
-            return audioUrl;
-        } catch (error) {
-            console.error('Failed to save to IndexedDB:', error);
-            throw error;
-        }
+        return audioUrl;
     }
 
-    async clearCache() {
-        try {
-            if (this.currentAudio) {
-                this.currentAudio.pause();
-                this.currentAudio.onended = null;
-                this.currentAudio = null;
+    async loadAudioCache() {
+        const items = await this.db.getAllMetadata();
+        for (const item of items) {
+            const audioData = await this.db.getAudio(item.text);
+            if (audioData) {
+                const audioUrl = URL.createObjectURL(audioData.audio);
+                this.audioCache.set(item.text, {
+                    url: audioUrl,
+                    size: item.size
+                });
+                this.totalCacheSize += item.size;
             }
-            this.isSpeaking = false;
-            
-            // Clear memory cache
-            this.audioCache.forEach(({url}) => URL.revokeObjectURL(url));
-            this.audioCache.clear();
-            this.totalCacheSize = 0;
-
-            // Clear IndexedDB
-            const transaction = this.db.transaction(['audioData'], 'readwrite');
-            const store = transaction.objectStore('audioData');
-            await store.clear();
-        } catch (error) {
-            console.error('Failed to clear IndexedDB cache:', error);
-            throw error;
         }
     }
 }
