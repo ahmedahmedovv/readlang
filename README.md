@@ -16,7 +16,6 @@ A Chrome extension that provides text-to-speech functionality for ReadLang using
 
 - Real-time text-to-speech conversion of selected text
 - Multiple voice options (Alloy, Echo, Fable, Onyx, Nova)
-- Configurable display position
 - Audio caching for improved performance
 - Replay functionality for last spoken text
 - Cache management system
