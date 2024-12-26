@@ -13,12 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Save settings
     document.getElementById('save').addEventListener('click', function() {
         const voice = document.getElementById('voice').value;
-        const position = document.getElementById('position').value;
         const apiKey = document.getElementById('apiKey').value;
 
         chrome.storage.sync.set({
             voice: voice,
-            position: position,
             apiKey: apiKey
         }, function() {
             // Show save confirmation
