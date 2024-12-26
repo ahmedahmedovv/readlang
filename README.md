@@ -2,6 +2,17 @@
 
 A Chrome extension that provides text-to-speech functionality for ReadLang using OpenAI's TTS API.
 
+## Screenshots
+
+### Extension Popup
+![Extension Settings](screenshots/setting.png)
+*Extension settings panel showing voice and position options*
+
+### In-Action Preview
+![Extension in Action](screenshots/screenshot.png)
+*ReadLang page with the speech button overlay*
+
+
 ## Features
 
 - Real-time text-to-speech conversion of selected text
