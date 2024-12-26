@@ -1,17 +1,15 @@
-# Context Finder Chrome Extension
+# ReadLang Speech Extension
 
-A Chrome extension that enhances text-to-speech functionality with OpenAI's TTS API, featuring audio caching and customizable display options.
+A Chrome extension that provides text-to-speech functionality for ReadLang using OpenAI's TTS API.
 
 ## Features
 
-- 🎯 Automatically detects and reads content from specified page elements
-- 🔊 Text-to-speech powered by OpenAI's TTS API
-- 💾 Audio caching system for improved performance
-- 🎨 Customizable display position (top-left, top-right, bottom-left, bottom-right)
-- 🗣️ Multiple voice options (Alloy, Echo, Fable, Onyx, Nova)
-- 🔄 Replay functionality for last spoken content
-- 📊 Cache management with size tracking
-- 🔐 Secure API key storage
+- Real-time text-to-speech conversion of selected text
+- Multiple voice options (Alloy, Echo, Fable, Onyx, Nova)
+- Configurable display position
+- Audio caching for improved performance
+- Replay functionality for last spoken text
+- Cache management system
 
 ## Installation
 
@@ -22,49 +20,35 @@ A Chrome extension that enhances text-to-speech functionality with OpenAI's TTS 
 
 ## Configuration
 
-### Required Setup
-1. Open the extension popup by clicking the extension icon
-2. Enter your OpenAI API key in the settings
-3. Choose your preferred voice and display position
-4. Click "Save Changes"
+1. Click the extension icon to open settings
+2. Enter your OpenAI API key
+3. Select your preferred voice
+4. Choose display position
+5. Click "Save Changes"
 
-### Available Settings
+## Required Permissions
 
-- **Voice Options:**
-  - Alloy
-  - Echo
-  - Fable
-  - Onyx
-  - Nova
-
-- **Display Positions:**
-  - Top Left
-  - Top Right
-  - Bottom Left
-  - Bottom Right
+- `activeTab`: For accessing page content
+- `storage`: For saving user preferences
+- Access to `api.openai.com` for TTS functionality
 
 ## Usage
 
-The extension will automatically:
-1. Monitor specified page elements for content changes
-2. Display the content in a floating window
-3. Read the content aloud using the selected voice
-4. Cache audio for improved performance
+The extension automatically detects text in ReadLang's word cards and context areas, converting them to speech using OpenAI's TTS API.
 
-### Controls
-- 🔊 **Replay Button**: Click to replay the last spoken content
-- 🗑️ **Clear Cache**: Manage audio cache through the extension popup
-- 📊 **Cache Info**: View current cache size and entry count
+### Features:
+- Click the replay button to repeat the last spoken text
+- Clear audio cache through the settings panel
+- Monitor cache usage in the settings
 
 ## Technical Details
 
-### Components
+- Built with vanilla JavaScript
+- Uses Chrome Extension Manifest V3
+- Implements IndexedDB for audio caching
+- Supports OpenAI's TTS-1-HD model
 
-- `content.js`: Main content script handling DOM operations and UI
-- `speech.js`: Speech service managing TTS functionality and audio caching
-- `popup.js`: Settings management and user interface
-- `config.js`: Configuration management and settings storage
+## Dependencies
 
-### Features Implementation
-
-#### Audio Caching
+- OpenAI API (requires API key)
+- Chrome Browser
