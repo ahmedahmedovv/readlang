@@ -2,7 +2,7 @@ const DEFAULT_CONFIG = {
     selectors: {
         wordCard: '#wordCardText',
         context: '#context',
-        display: 'context-finder-display'
+        display: 'tts-status-display'
     },
     ignoredWords: [
         '_',
@@ -10,24 +10,8 @@ const DEFAULT_CONFIG = {
         'no context',
         'xxx'
     ],
-    displayStyles: {
-        position: 'fixed',
-        top: '10px',
-        left: '10px',
-        background: '#f0f0f0',
-        padding: '10px',
-        border: '1px solid #ccc',
-        borderRadius: '5px',
-        zIndex: '9999'
-    },
     speech: {
-        debounceTime: 300,
-        button: {
-            text: '🔊 Replay',
-            styles: {
-                marginTop: '10px'
-            }
-        }
+        debounceTime: 300
     },
     openai: {
         apiKey: '',
@@ -37,6 +21,18 @@ const DEFAULT_CONFIG = {
     },
     textFormatting: {
         sentenceEnd: '. \n'
+    },
+    displayStyles: {
+        position: 'fixed',
+        top: '10px',
+        left: '10px',
+        padding: '8px 12px',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        color: 'white',
+        borderRadius: '4px',
+        zIndex: '9999',
+        fontSize: '14px',
+        fontFamily: 'Arial, sans-serif'
     }
 };
 

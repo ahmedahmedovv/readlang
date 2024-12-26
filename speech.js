@@ -127,16 +127,8 @@ class SpeechService {
         this.isProcessingQueue = false;
         this.speechQueue = []; // Clear the queue
         
-        // Start fresh speech
-        this.speak(text, (isFromCache) => {
-            const display = document.getElementById(CONFIG.selectors.display);
-            if (display) {
-                const sourceIndicator = display.firstChild;
-                sourceIndicator.textContent = isFromCache ? 
-                    '🔄 Playing from cache' : 
-                    '🌐 Fetching from OpenAI';
-            }
-        });
+        // Start fresh speech without status indicator
+        this.speak(text);
     }
 
     async clearCache() {

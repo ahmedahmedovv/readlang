@@ -20,9 +20,75 @@ function cacheDOMElements() {
     domElements.display = document.getElementById(CONFIG.selectors.display);
 }
 
+function createStatusDisplay() {
+    const display = document.createElement('div');
+    display.id = CONFIG.selectors.display;
+    
+    // Create replay button
+    const replayButton = document.createElement('button');
+    replayButton.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="rgb(86, 119, 144)">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+    `;
+    
+    // Style the button and container
+    Object.assign(display.style, {
+        position: 'absolute',
+        top: '2px',
+        left: '3px',
+        zIndex: '9999'
+    });
+    
+    Object.assign(replayButton.style, {
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        fontSize: '20px',
+        padding: '4px 8px',
+        backgroundColor: 'transparent',
+        borderRadius: '4px'
+    });
+    
+    // Add hover effect
+    replayButton.addEventListener('mouseover', () => {
+        replayButton.querySelector('svg').setAttribute('fill', 'black');
+    });
+    
+    replayButton.addEventListener('mouseout', () => {
+        replayButton.querySelector('svg').setAttribute('fill', 'rgb(86, 119, 144)');
+    });
+    
+    replayButton.title = 'Replay';
+    
+    // Add click handler
+    replayButton.addEventListener('click', () => {
+        const lastContent = speechService.lastSpokenContent;
+        if (lastContent) {
+            speechService.replay(lastContent);
+        }
+    });
+    
+    display.appendChild(replayButton);
+    
+    // Append to wordCard instead of body
+    const wordCard = document.querySelector('#word.wordCard');
+    if (wordCard) {
+        wordCard.style.position = 'relative';
+        wordCard.appendChild(display);
+    }
+    
+    return display;
+}
+
 function showContextContent() {
     // Update cache
     cacheDOMElements();
+    
+    // Create or get status display
+    if (!domElements.display) {
+        domElements.display = createStatusDisplay();
+    }
     
     let combinedContent = '';
     
@@ -40,57 +106,9 @@ function showContextContent() {
         }
     }
     
-    // Only proceed if content changed
-    if (combinedContent && (!domElements.display || domElements.display.children[1].textContent !== combinedContent)) {
-        let display = document.getElementById(CONFIG.selectors.display);
-        
-        if (!display) {
-            display = document.createElement('div');
-            display.id = CONFIG.selectors.display;
-            Object.assign(display.style, CONFIG.displayStyles);
-            
-            const sourceIndicator = document.createElement('div');
-            sourceIndicator.style.fontSize = '12px';
-            sourceIndicator.style.color = '#666';
-            sourceIndicator.style.marginBottom = '5px';
-            
-            const speakButton = document.createElement('button');
-            speakButton.textContent = CONFIG.speech.button.text;
-            Object.assign(speakButton.style, {
-                ...CONFIG.speech.button.styles,
-                padding: '8px 16px',
-                backgroundColor: '#1a73e8',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-            });
-            
-            speakButton.onclick = () => {
-                const contentDiv = display.children[1];
-                const currentContent = contentDiv.textContent;
-                if (currentContent) {
-                    speechService.replay(currentContent);
-                }
-            };
-            
-            display.appendChild(sourceIndicator);
-            display.appendChild(document.createElement('div'));
-            display.appendChild(speakButton);
-            document.body.appendChild(display);
-        }
-        
-        const contentDiv = display.children[1];
-        if (contentDiv.textContent !== combinedContent) {
-            contentDiv.textContent = combinedContent;
-            
-            const sourceIndicator = display.firstChild;
-            speechService.speak(combinedContent, (isFromCache) => {
-                sourceIndicator.textContent = isFromCache ? 
-                    '🔄 Playing from cache' : 
-                    '🌐 Fetching from OpenAI';
-            });
-        }
+    // Only proceed if content exists and has changed
+    if (combinedContent) {
+        speechService.speak(combinedContent);
     }
 }
 
