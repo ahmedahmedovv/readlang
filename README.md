@@ -7,12 +7,9 @@ A Chrome extension that provides text-to-speech functionality for ReadLang using
 ### Extension Popup
 ![Extension Settings](screenshots/setting.png)
 
-*Extension settings panel showing voice and position options*
 
 ### In-Action Preview
 ![Extension in Action](screenshots/screenshot.png)
-
-*ReadLang page with the speech button overlay*
 
 
 ## Features
@@ -36,8 +33,7 @@ A Chrome extension that provides text-to-speech functionality for ReadLang using
 1. Click the extension icon to open settings
 2. Enter your OpenAI API key
 3. Select your preferred voice
-4. Choose display position
-5. Click "Save Changes"
+4. Click "Save Changes"
 
 ## Required Permissions
 
