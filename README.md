@@ -6,10 +6,12 @@ A Chrome extension that provides text-to-speech functionality for ReadLang using
 
 ### Extension Popup
 ![Extension Settings](screenshots/setting.png)
+
 *Extension settings panel showing voice and position options*
 
 ### In-Action Preview
 ![Extension in Action](screenshots/screenshot.png)
+
 *ReadLang page with the speech button overlay*
 
 
