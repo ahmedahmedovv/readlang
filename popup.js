@@ -1,29 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Load saved settings
-    chrome.storage.sync.get({
-        position: 'top-left'
-    }, function(items) {
-        document.getElementById('position').value = items.position;
-    });
-
-    // Save settings
-    document.getElementById('save').addEventListener('click', function() {
-        chrome.storage.sync.set({
-            position: document.getElementById('position').value
-        }, function() {
-            // Show save confirmation
-            const button = document.getElementById('save');
-            const originalText = button.textContent;
-            button.textContent = 'Saved!';
-            button.style.backgroundColor = '#34A853';
-            
-            setTimeout(() => {
-                button.textContent = originalText;
-                button.style.backgroundColor = '#1a73e8';
-            }, 1500);
-        });
-    });
-
     // Update cache size when popup opens
     updateCacheSize();
 
