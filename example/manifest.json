@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Text Speaker",
+  "version": "1.0",
+  "description": "Speaks text content when Ctrl+clicking elements",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://translate.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+} 

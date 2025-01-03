@@ -9,19 +9,6 @@ class SpeechService {
         this.isProcessingQueue = false;
         this.totalCacheSize = 0;
         this.db = new AudioDB();
-
-        // Listen for config changes
-        chrome.storage.onChanged.addListener((changes, namespace) => {
-            if (namespace === 'sync') {
-                if (changes.apiKey) {
-                    this.config.openai.apiKey = changes.apiKey.newValue;
-                }
-                if (changes.voice) {
-                    this.config.openai.voice = changes.voice.newValue;
-                }
-            }
-        });
-
         this.init();
     }
 
@@ -66,25 +53,33 @@ class SpeechService {
                     console.log('Using cached audio');
                     audioUrl = this.audioCache.get(text).url;
                 } else {
-                    console.log('Fetching new audio from API');
-                    const response = await fetch(this.config.openai.endpoint, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${this.config.openai.apiKey}`,
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            model: this.config.openai.model,
-                            voice: this.config.openai.voice,
-                            input: text
-                        })
+                    console.log('Fetching new audio from Google Translate');
+                    const response = await new Promise((resolve, reject) => {
+                        chrome.runtime.sendMessage(
+                            { action: 'speak', text: text },
+                            response => {
+                                if (response.error) {
+                                    reject(new Error(response.error));
+                                } else {
+                                    resolve(response);
+                                }
+                            }
+                        );
                     });
 
-                    if (!response.ok) {
-                        throw new Error('Speech generation failed');
+                    if (!response.audioData) {
+                        throw new Error('No audio data received');
                     }
 
-                    const audioBlob = await response.blob();
+                    // Convert base64 to blob
+                    const byteString = atob(response.audioData.split(',')[1]);
+                    const mimeString = response.audioData.split(',')[0].split(':')[1].split(';')[0];
+                    const ab = new ArrayBuffer(byteString.length);
+                    const ia = new Uint8Array(ab);
+                    for (let i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    const audioBlob = new Blob([ab], { type: mimeString });
                     audioUrl = await this.setAudioCache(text, audioBlob);
                 }
 
@@ -159,9 +154,9 @@ class SpeechService {
         });
         this.totalCacheSize += audioBlob.size;
 
-        // Save to IndexedDB
+        // Save to IndexedDB with simplified metadata
         await this.db.saveAudio(text, audioBlob, {
-            voice: this.config.openai.voice
+            timestamp: Date.now()
         });
 
         return audioUrl;

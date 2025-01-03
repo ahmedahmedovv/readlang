@@ -13,12 +13,6 @@ const DEFAULT_CONFIG = {
     speech: {
         debounceTime: 300
     },
-    openai: {
-        apiKey: '',
-        voice: 'alloy',
-        model: 'tts-1-hd',
-        endpoint: 'https://api.openai.com/v1/audio/speech'
-    },
     textFormatting: {
         sentenceEnd: '. \n'
     },
@@ -36,16 +30,9 @@ const DEFAULT_CONFIG = {
     }
 };
 
-// Load user settings and merge with defaults
 let CONFIG = DEFAULT_CONFIG;
 
-chrome.storage.sync.get(['apiKey', 'voice', 'position'], function(items) {
-    if (items.apiKey) {
-        CONFIG.openai.apiKey = items.apiKey;
-    }
-    if (items.voice) {
-        CONFIG.openai.voice = items.voice;
-    }
+chrome.storage.sync.get(['position'], function(items) {
     if (items.position) {
         updatePosition(items.position);
     }
@@ -82,12 +69,6 @@ function updatePosition(position) {
 // Listen for settings changes
 chrome.storage.onChanged.addListener(function(changes, namespace) {
     if (namespace === 'sync') {
-        if (changes.apiKey) {
-            CONFIG.openai.apiKey = changes.apiKey.newValue;
-        }
-        if (changes.voice) {
-            CONFIG.openai.voice = changes.voice.newValue;
-        }
         if (changes.position) {
             updatePosition(changes.position.newValue);
             // Update existing display if it exists

@@ -2,9 +2,12 @@
   "manifest_version": 3,
   "name": "ReadLang Speech",
   "version": "1.0.0",
-  "description": "Text-to-speech functionality for ReadLang using OpenAI's TTS API",
-  "permissions": ["activeTab", "storage"],
-  "host_permissions": ["https://api.openai.com/*"],
+  "description": "Text-to-speech functionality for ReadLang using Google Translate TTS",
+  "permissions": ["activeTab", "storage", "scripting"],
+  "host_permissions": ["https://translate.google.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

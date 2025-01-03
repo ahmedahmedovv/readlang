@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Context Finder Options</title>
+    <title>Text-to-Speech Settings</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="popup.css" rel="stylesheet">
@@ -11,28 +11,6 @@
         <h1>Settings</h1>
         
         <div class="section">
-            <h2>Voice Settings</h2>
-            <div class="input-field">
-                <label for="voice">Voice</label>
-                <select id="voice" class="material-select">
-                    <option value="alloy">Alloy</option>
-                    <option value="echo">Echo</option>
-                    <option value="fable">Fable</option>
-                    <option value="onyx">Onyx</option>
-                    <option value="nova">Nova</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>API Settings</h2>
-            <div class="input-field">
-                <label for="apiKey">API Key</label>
-                <input type="password" id="apiKey" class="material-input">
-            </div>
-        </div>
-
-        <div class="section">
             <h2>Cache Management</h2>
             <div class="cache-info">
                 <span id="cacheSize">Cache size: calculating...</span>
@@ -41,8 +19,6 @@
                 </button>
             </div>
         </div>
-
-        <button id="save" class="material-button">Save Changes</button>
     </div>
     <script src="popup.js"></script>
 </body>
