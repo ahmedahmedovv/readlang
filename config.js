@@ -18,18 +18,4 @@ const DEFAULT_CONFIG = {
     }
 };
 
-let CONFIG = DEFAULT_CONFIG;
-
-// Listen for settings changes
-chrome.storage.onChanged.addListener(function(changes, namespace) {
-    if (namespace === 'sync') {
-        if (changes.position) {
-            updatePosition(changes.position.newValue);
-            // Update existing display if it exists
-            const display = document.getElementById(CONFIG.selectors.display);
-            if (display) {
-                Object.assign(display.style, CONFIG.displayStyles);
-            }
-        }
-    }
-}); 
+let CONFIG = DEFAULT_CONFIG; 
