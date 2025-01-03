@@ -1,23 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Load saved settings
     chrome.storage.sync.get({
-        voice: 'alloy',
-        position: 'top-left',
-        apiKey: ''
+        position: 'top-left'
     }, function(items) {
-        document.getElementById('voice').value = items.voice;
         document.getElementById('position').value = items.position;
-        document.getElementById('apiKey').value = items.apiKey;
     });
 
     // Save settings
     document.getElementById('save').addEventListener('click', function() {
-        const voice = document.getElementById('voice').value;
-        const apiKey = document.getElementById('apiKey').value;
-
         chrome.storage.sync.set({
-            voice: voice,
-            apiKey: apiKey
+            position: document.getElementById('position').value
         }, function() {
             // Show save confirmation
             const button = document.getElementById('save');
