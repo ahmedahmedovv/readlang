@@ -1,62 +1,29 @@
-# ReadLang Speech Extension
+# ReadLang Text-to-Speech Extension
 
-A Chrome extension that provides text-to-speech functionality for ReadLang using OpenAI's TTS API.
-
-## Screenshots
-
-### Extension Popup
-![Extension Settings](screenshots/setting.png)
-
-
-### In-Action Preview
-![Extension in Action](screenshots/screenshot.png)
-
+A Chrome extension that provides text-to-speech functionality for ReadLang using Google Translate's TTS service. The extension allows users to hear the pronunciation of words and sentences while learning languages.
 
 ## Features
 
-- Real-time text-to-speech conversion of selected text
-- Multiple voice options (Alloy, Echo, Fable, Onyx, Nova)
-- Audio caching for improved performance
+- Text-to-speech using Google Translate's TTS service
+- Audio caching for offline playback and improved performance
+- Simple cache management interface
 - Replay functionality for last spoken text
-- Cache management system
+- Efficient memory management with IndexedDB storage
 
 ## Installation
 
-1. Clone this repository
+1. Clone this repository or download the ZIP file
 2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode" in the top right
+3. Enable "Developer mode" in the top right corner
 4. Click "Load unpacked" and select the extension directory
-
-## Configuration
-
-1. Click the extension icon to open settings
-2. Enter your OpenAI API key
-3. Select your preferred voice
-4. Click "Save Changes"
-
-## Required Permissions
-
-- `activeTab`: For accessing page content
-- `storage`: For saving user preferences
-- Access to `api.openai.com` for TTS functionality
 
 ## Usage
 
-The extension automatically detects text in ReadLang's word cards and context areas, converting them to speech using OpenAI's TTS API.
+1. Visit any webpage with text content
+2. Click on text while holding the Ctrl key to hear it spoken
+3. Use the extension popup to:
+   - View cache size and usage
+   - Clear cached audio files when needed
+   - Replay the last spoken text
 
-### Features:
-- Click the replay button to repeat the last spoken text
-- Clear audio cache through the settings panel
-- Monitor cache usage in the settings
-
-## Technical Details
-
-- Built with vanilla JavaScript
-- Uses Chrome Extension Manifest V3
-- Implements IndexedDB for audio caching
-- Supports OpenAI's TTS-1-HD model
-
-## Dependencies
-
-- OpenAI API (requires API key)
-- Chrome Browser
+## File Structure
