@@ -14,7 +14,8 @@ const DEFAULT_CONFIG = {
         debounceTime: 300
     },
     textFormatting: {
-        sentenceEnd: '. \n'
+        sentenceEnd: '\n',
+        cleanCharacters: ['.']
     }
 };
 
