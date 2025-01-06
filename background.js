@@ -1,6 +1,6 @@
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'speak') {
-    fetch(`https://translate.google.com/translate_tts?ie=UTF-8&tl=en&client=tw-ob&q=${encodeURIComponent(request.text)}`)
+    fetch(`https://translate.google.com/translate_tts?ie=UTF-8&tl=${request.lang}&client=tw-ob&q=${encodeURIComponent(request.text)}`)
       .then(response => response.blob())
       .then(blob => {
         const reader = new FileReader();
@@ -13,6 +13,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.error('Error fetching audio:', error);
         sendResponse({ error: error.message });
       });
-    return true; // Required for async response
+    return true;
   }
 }); 

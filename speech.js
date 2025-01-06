@@ -9,6 +9,7 @@ class SpeechService {
         this.isProcessingQueue = false;
         this.totalCacheSize = 0;
         this.db = new AudioDB();
+        this.languageCache = new Map();
         this.init();
     }
 
@@ -28,6 +29,24 @@ class SpeechService {
         }
     }
 
+    async detectLanguage(text) {
+        if (this.languageCache.has(text)) {
+            return this.languageCache.get(text);
+        }
+
+        try {
+            const response = await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=' + encodeURIComponent(text));
+            const data = await response.json();
+            const detectedLang = data[2] || 'en';
+            
+            this.languageCache.set(text, detectedLang);
+            return detectedLang;
+        } catch (error) {
+            console.error('Language detection error:', error);
+            return 'en';
+        }
+    }
+
     async processSpeechQueue() {
         if (this.isProcessingQueue || this.speechQueue.length === 0) return;
         
@@ -37,6 +56,8 @@ class SpeechService {
             const { text, onSourceCallback } = this.speechQueue[0];
             
             try {
+                const detectedLang = await this.detectLanguage(text);
+                
                 if (this.isSpeaking) {
                     if (this.currentAudio) {
                         this.currentAudio.pause();
@@ -48,15 +69,21 @@ class SpeechService {
                 this.isSpeaking = true;
                 let audioUrl;
 
-                const isFromCache = this.audioCache.has(text);
+                const cacheKey = `${text}_${detectedLang}`;
+                const isFromCache = this.audioCache.has(cacheKey);
+                
                 if (isFromCache) {
                     console.log('Using cached audio');
-                    audioUrl = this.audioCache.get(text).url;
+                    audioUrl = this.audioCache.get(cacheKey).url;
                 } else {
-                    console.log('Fetching new audio from Google Translate');
+                    console.log(`Fetching new audio from Google Translate (${detectedLang})`);
                     const response = await new Promise((resolve, reject) => {
                         chrome.runtime.sendMessage(
-                            { action: 'speak', text: text },
+                            { 
+                                action: 'speak', 
+                                text: text,
+                                lang: detectedLang
+                            },
                             response => {
                                 if (response.error) {
                                     reject(new Error(response.error));
@@ -71,7 +98,6 @@ class SpeechService {
                         throw new Error('No audio data received');
                     }
 
-                    // Convert base64 to blob
                     const byteString = atob(response.audioData.split(',')[1]);
                     const mimeString = response.audioData.split(',')[0].split(':')[1].split(';')[0];
                     const ab = new ArrayBuffer(byteString.length);
@@ -80,7 +106,7 @@ class SpeechService {
                         ia[i] = byteString.charCodeAt(i);
                     }
                     const audioBlob = new Blob([ab], { type: mimeString });
-                    audioUrl = await this.setAudioCache(text, audioBlob);
+                    audioUrl = await this.setAudioCache(cacheKey, audioBlob);
                 }
 
                 if (onSourceCallback) {
@@ -112,7 +138,6 @@ class SpeechService {
     }
 
     replay(text) {
-        // Clear any existing speech and queue
         if (this.currentAudio) {
             this.currentAudio.pause();
             this.currentAudio.onended = null;
@@ -120,9 +145,8 @@ class SpeechService {
         }
         this.isSpeaking = false;
         this.isProcessingQueue = false;
-        this.speechQueue = []; // Clear the queue
+        this.speechQueue = [];
         
-        // Start fresh speech without status indicator
         this.speak(text);
     }
 
@@ -154,7 +178,6 @@ class SpeechService {
         });
         this.totalCacheSize += audioBlob.size;
 
-        // Save to IndexedDB with simplified metadata
         await this.db.saveAudio(text, audioBlob, {
             timestamp: Date.now()
         });
