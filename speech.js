@@ -10,6 +10,7 @@ class SpeechService {
         this.totalCacheSize = 0;
         this.db = new AudioDB();
         this.languageCache = new Map();
+        this.speechRate = 1.3;
         this.init();
     }
 
@@ -116,6 +117,8 @@ class SpeechService {
                 const audio = new Audio(audioUrl);
                 this.currentAudio = audio;
                 
+                audio.playbackRate = this.speechRate;
+                
                 audio.onended = () => {
                     this.isSpeaking = false;
                     this.lastSpokenContent = text;
@@ -198,6 +201,10 @@ class SpeechService {
                 this.totalCacheSize += item.size;
             }
         }
+    }
+
+    setSpeechRate(rate) {
+        this.speechRate = Math.max(0.5, Math.min(2.0, rate));
     }
 }
 
