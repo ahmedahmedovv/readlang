@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "ReadLang Speech",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Text-to-speech functionality for ReadLang using Google Translate TTS",
-  "permissions": ["activeTab", "storage", "scripting"],
+  "permissions": ["activeTab"],
   "host_permissions": ["https://translate.google.com/*"],
   "background": {
     "service_worker": "background.js"
