@@ -8,7 +8,8 @@ const DEFAULT_CONFIG = {
         '_',
         'loading context',
         'no context',
-        'xxx'
+        'xxx',
+        '?'
     ],
     speech: {
         debounceTime: 300

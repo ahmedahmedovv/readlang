@@ -1,7 +1,12 @@
 function containsIgnoredWords(text) {
-    return CONFIG.ignoredWords.some(word => 
-        text.toLowerCase().includes(word.toLowerCase())
-    );
+    return CONFIG.ignoredWords.some(word => {
+        // For question mark, check exact match only
+        if (word === '?') {
+            return text.trim() === '?';
+        }
+        // For other words, check if text contains the word
+        return text.toLowerCase().includes(word.toLowerCase());
+    });
 }
 
 const speechService = new SpeechService(CONFIG);
